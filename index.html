@@ -1,0 +1,83 @@
+< !DOCTYPE html >
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Peak Discharge Calculator</title>
+                    <script>
+                        function calculatePeakDischarge() {
+            // Get the peak flow data and return periods from inputs
+            const peakFlowData = document.getElementById('peakFlowData').value.split(',').map(Number);
+                        const returnPeriods = document.getElementById('returnPeriods').value.split(',').map(Number);
+
+                        // Validate inputs
+                        if (peakFlowData.some(isNaN) || returnPeriods.some(isNaN)) {
+                            alert("Please enter valid numeric values for peak flow data and return periods.");
+                        return;
+            }
+
+                        // Calculate Gumbel and Log-Pearson results
+                        const gumbelResults = calculateGumbel(peakFlowData, returnPeriods);
+                        const logPearsonResults = calculateLogPearson(peakFlowData, returnPeriods);
+
+                        // Display results
+                        document.getElementById('gumbelResults').innerText = JSON.stringify(gumbelResults, null, 2);
+                        document.getElementById('logPearsonResults').innerText = JSON.stringify(logPearsonResults, null, 2);
+        }
+
+                        function calculateGumbel(peakFlowData, returnPeriods) {
+            const mean = calculateMean(peakFlowData);
+                        const stdDev = calculateStandardDeviation(peakFlowData, mean);
+                        const results = { };
+
+            returnPeriods.forEach(period => {
+                // Gumbel calculation formula
+                const gumbelValue = mean - stdDev * Math.log(-Math.log(1 - 1 / period));
+                        results[period] = parseFloat(gumbelValue.toFixed(2)); // Round to 2 decimal places
+            });
+
+                        return results;
+        }
+
+                        function calculateLogPearson(peakFlowData, returnPeriods) {
+            const logPeakFlowData = peakFlowData.map(x => Math.log(x));
+                        const meanLog = calculateMean(logPeakFlowData);
+                        const stdDevLog = calculateStandardDeviation(logPeakFlowData, meanLog);
+                        const results = { };
+
+            returnPeriods.forEach(period => {
+                // Log-Pearson calculation formula
+                const logPearsonValue = Math.exp(meanLog + stdDevLog * Math.log(period));
+                        results[period] = parseFloat(logPearsonValue.toFixed(2)); // Round to 2 decimal places
+            });
+
+                        return results;
+        }
+
+                        function calculateMean(data) {
+            return data.reduce((a, b) => a + b, 0) / data.length;
+        }
+
+                        function calculateStandardDeviation(data, mean) {
+            const variance = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / data.length;
+                        return Math.sqrt(variance);
+        }
+                    </script>
+                </head>
+                <body>
+                    <h1>Peak Discharge Calculator</h1>
+                    <h2>Enter Peak Flow Data (comma-separated):</h2>
+                    <input type="text" id="peakFlowData" placeholder="e.g., 100,200,150,300" required>
+
+                        <h2>Enter Return Periods (comma-separated):</h2>
+                        <input type="text" id="returnPeriods" placeholder="e.g., 2,5,10,25,50,100" required>
+
+                            <button onclick="calculatePeakDischarge()">Calculate</button>
+
+                            <h2>Results:</h2>
+                            <h3>Gumbel Method:</h3>
+                            <pre id="gumbelResults"></pre>
+                            <h3>Log-Pearson Method:</h3>
+                            <pre id="logPearsonResults"></pre>
+                        </body>
+                    </html>
